@@ -39,9 +39,9 @@ drupal8ci:build:
     - if [ ! -f ${WEB_ROOT}/index.php ];
       then
         composer create-project drupal-composer/drupal-project:8.x-dev drupal
-        --stability dev --no-interaction --ignore-platform-reqs --quiet;
+          --stability dev --no-interaction --ignore-platform-reqs --quiet;
+        cp -r drupal/* ${CI_PROJECT_DIR}/;
       fi
-    - cp -r drupal/* ${CI_PROJECT_DIR}/
   artifacts:
     paths:
       - ./
