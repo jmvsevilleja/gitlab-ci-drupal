@@ -1,5 +1,5 @@
 variables:
-  WEB_ROOT: "web"
+  WEB_ROOT: "drupal/web"
   UNIT_TEST_ROOT: "core/modules/node"
 
 stages:
@@ -40,7 +40,6 @@ drupal8ci:build:
       then
         composer create-project drupal-composer/drupal-project:8.x-dev drupal
           --stability dev --no-interaction --ignore-platform-reqs --quiet;
-        cp -r drupal/* ${CI_PROJECT_DIR}/;
       fi
   artifacts:
     paths:
@@ -48,8 +47,7 @@ drupal8ci:build:
   cache:
     key: drupal-build-cache
     paths:
-      - ${WEB_ROOT}
-      - vendor
+      - drupal
   except:
     - master
 
