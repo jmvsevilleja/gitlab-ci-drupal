@@ -43,11 +43,11 @@ drupal8ci:build:
       fi
   artifacts:
     paths:
-      - ./
+      - ./drupal
   cache:
     key: drupal-build-cache
     paths:
-      - drupal
+      - ./drupal
   except:
     - master
 
