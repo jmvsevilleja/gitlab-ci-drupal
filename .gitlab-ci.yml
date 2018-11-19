@@ -195,7 +195,11 @@ stages:
     - tar -xzf drupal.tar.gz
     - mv drupal-project-8.x drupal
     - rm -f drupal.tar.gz
-    # - composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction --quiet
+    # check if not already from cache.
+    - if [ ! -f ./drupal/web/index.php ];
+      then
+        composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction -vvv
+      fi
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
