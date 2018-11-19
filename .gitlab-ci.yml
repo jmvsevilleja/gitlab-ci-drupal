@@ -269,6 +269,7 @@ Build:
     - if [ -f ${CI_PROJECT_DIR}/dump/dump.sql ];
       then
         apk --no-cache add mysql-client;
+        mysql -hmariadb -uroot -e "CREATE DATABASE drupal8 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
         mysql -hmariadb -uroot drupal8 < ${CI_PROJECT_DIR}/dump/dump.sql;
       else
         echo "Missing database dump";
