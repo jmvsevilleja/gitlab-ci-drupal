@@ -193,26 +193,14 @@ stages:
     - apk --no-cache add curl
     - curl -fsSl https://codeload.github.com/drupal-composer/drupal-project/tar.gz/8.x -o drupal.tar.gz
     - tar -xzf drupal.tar.gz
-    - cp -r drupal-project-8.x/* .
-    - cp -r drupal-project-8.x/.env* .
-    - cp -r drupal-project-8.x/.git* .
-    - rm -rf drupal-project-8.x drupal.tar.gz
-    - composer install --prefer-dist --no-suggest --no-interaction --quiet --no-dev
+    - mv drupal-project-8.x drupal
+    - rm -f drupal.tar.gz
+    - composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction --quiet --no-dev
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
       # Folders from Drupal template, add any folders/files you need.
-      - ./drush
-      - ./scripts
-      - ./vendor
-      - ./${WEB_ROOT}
-      - LICENSE
-      - README.md
-      - composer.json
-      - composer.lock
-      - load.environment.php
-      - .env.example
-      - .gitignore
+      - ./drupal
     expire_in: 1 day
   variables:
     MYSQL_ALLOW_EMPTY_PASSWORD: "1"
