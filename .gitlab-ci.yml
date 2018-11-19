@@ -178,12 +178,11 @@ stages:
     # Sample to install a Drupal 8 with drupal composer template.
     - composer global require hirak/prestissimo
         --no-progress --no-suggest --ignore-platform-reqs
-    - mkdir -p build
-    - rm -rf build/*
-    - composer create-project drupal-composer/drupal-project:8.x-dev build
+    - mkdir -p build-${CI_JOB_NAME}
+    - composer create-project drupal-composer/drupal-project:8.x-dev build-${CI_JOB_NAME}
         --stability dev --no-interaction --ignore-platform-reqs --quiet
-    - cp -r build/* .
-    - rm -rf build
+    - cp -r build-${CI_JOB_NAME}/* .
+    - rm -rf build-${CI_JOB_NAME}
     # Install project libraries and dependencies from a local composer.json
     # - composer install
     #   --dev --ignore-platform-reqs --no-suggest --no-interaction --quiet
@@ -337,34 +336,6 @@ Code coverage:
 ################################################################################
 # Code quality and code lint jobs.
 ################################################################################
-
-codequality:
-  stage: code quality
-  # It won't make sense to run codequality on deploy branches, because we
-  # # are assuming that the developer has already addressed the problems.
-  except:
-    - uat
-    - master
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  before_script:
-    - docker info
-  script:
-    - docker pull codeclimate/codeclimate
-    - docker run 
-      --env CODECLIMATE_CODE="$PWD"
-      --volume "$PWD":/code
-      --volume /var/run/docker.sock:/var/run/docker.sock
-      --volume /tmp/cc:/tmp/cc
-      codeclimate/codeclimate analyze -f json > gl-code-quality-report.json
-  artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
-  when: manual
 
 # Automated quality check job when something is pushed/merged on master.
 # We have a limit on errors we accept on the tools, if failed we run a
