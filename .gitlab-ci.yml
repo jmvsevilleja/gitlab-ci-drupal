@@ -197,7 +197,7 @@ stages:
     # check if not already from cache.
     - if [ ! -f ./drupal/web/index.php ];
       then
-        composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction -vvv;
+        composer install --working-dir drupal --ignore-platform-reqs --prefer-dist --no-suggest --no-interaction -vvv;
       fi
     - rm -f drupal.tar.gz
   artifacts:
