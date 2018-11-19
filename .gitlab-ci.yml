@@ -175,14 +175,14 @@ stages:
   services:
     - mariadb:10.3
   script:
-    # Sample to install a Drupal 8 with drupal composer template.
     - composer global require hirak/prestissimo
         --no-progress --no-suggest --ignore-platform-reqs
-    - mkdir -p build-${CI_JOB_NAME}
-    - composer create-project drupal-composer/drupal-project:8.x-dev build-${CI_JOB_NAME}
-        --stability dev --no-interaction --ignore-platform-reqs --quiet
-    - cp -r build-${CI_JOB_NAME}/* .
-    - rm -rf build-${CI_JOB_NAME}
+    # Sample to install a Drupal 8 with drupal composer template.
+    # - mkdir -p build-${CI_JOB_NAME}
+    # - composer create-project drupal-composer/drupal-project:8.x-dev build-${CI_JOB_NAME}
+    #     --stability dev --no-interaction --ignore-platform-reqs --quiet
+    # - cp -r build-${CI_JOB_NAME}/* .
+    # - rm -rf build-${CI_JOB_NAME}
     # Install project libraries and dependencies from a local composer.json
     # - composer install
     #   --dev --ignore-platform-reqs --no-suggest --no-interaction --quiet
@@ -190,6 +190,12 @@ stages:
     # - apk --no-cache add ruby ruby-dev libffi-dev build-base
     # - gem install --no-document listen sass compass bootstrap-sass
     # - compass compile ${WEB_ROOT}/themes/custom/${THEME}
+    - apk --no-cache add curl
+    - curl -fsSl https://github.com/drupal-composer/drupal-project/archive/8.x.zip -p drupal.tar.gz
+    - tar -xzf drupal.tar.gz
+    - cp -r drupal-project-8.x/* .
+    - rm -rf drupal-project-8.x
+    - composer install --prefer-dist --no-suggest --no-interaction --quiet --no-dev
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
@@ -271,8 +277,7 @@ Build:
         mysql -hmariadb -uroot -e "CREATE DATABASE drupal8 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
         mysql -hmariadb -uroot drupal8 < ${CI_PROJECT_DIR}/dump/dump.sql;
       else
-        echo "Missing database dump";
-        exit 1;
+        echo "Missing database dump!";
       fi
   # On build we cache the composer, web and dump folders.
   cache:
