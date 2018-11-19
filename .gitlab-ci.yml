@@ -56,7 +56,7 @@ variables:
   # See Phpqa available tools:
   #   https://github.com/EdgedesignCZ/phpqa#available-tools
   # Allow some errors, this will stop the pipeline if a limit is reached.
-  TOOLS: "--tools phpcs:0,phpmd,phpcpd,security-checker:0,parallel-lint"
+  TOOLS: "--tools phpcs:1,phpmd,phpcpd,security-checker:0,parallel-lint"
 ################################################################################
   # Next part do not need to be edited for a first quick run.
   #
@@ -275,8 +275,7 @@ Build:
   cache:
     key: drupal-build-cache
     paths:
-      - drupal/${WEB_ROOT}
-      - drupal/vendor
+      - drupal
       - dump
 
 # Job to run Unit and Kernel tests, do not require a build.
@@ -355,7 +354,7 @@ Best practices:
   script:
     - phpqa ${PHPQA_REPORT}
         --config ./phpqa_config/phpcs_drupal_best_practices
-        --tools phpcs:0
+        --tools phpcs:1
         ${PHPQA_PHP_CODE}
   only:
     - branches
