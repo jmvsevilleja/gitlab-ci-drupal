@@ -206,6 +206,7 @@ stages:
       - load.environment.php
     expire_in: 1 day
   variables:
+    MYSQL_ALLOW_EMPTY_PASSWORD: "1"
     DB_URL: "mysql://root@mariadb/drupal8"
 
 # Testing template for phpunit, this provide Apache / Php.
