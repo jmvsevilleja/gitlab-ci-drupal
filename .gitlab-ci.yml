@@ -172,6 +172,8 @@ stages:
 #   https://docs.gitlab.com/ee/ci/examples/deployment/composer-npm-deploy.html
 .build_template: &build_template
   image: composer:latest
+  services:
+    - mariadb:10.3
   script:
     # Sample to install a Drupal 8 with drupal composer template.
     - composer global require hirak/prestissimo
