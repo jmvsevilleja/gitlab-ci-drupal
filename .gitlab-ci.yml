@@ -56,7 +56,7 @@ variables:
   # See Phpqa available tools:
   #   https://github.com/EdgedesignCZ/phpqa#available-tools
   # Allow some errors, this will stop the pipeline if a limit is reached.
-  TOOLS: "--tools phpcs:5,phpmd,phpcpd,security-checker:0,parallel-lint"
+  TOOLS: "--tools phpcs:0,phpmd,phpcpd,security-checker:0,parallel-lint"
 ################################################################################
   # Next part do not need to be edited for a first quick run.
   #
@@ -351,9 +351,15 @@ codequality:
     - docker info
   script:
     - docker pull codeclimate/codeclimate
-    - docker run --env CODECLIMATE_CODE="$PWD" --volume "$PWD":/code --volume /var/run/docker.sock:/var/run/docker.sock --volume /tmp/cc:/tmp/cc codeclimate/codeclimate analyze -f json > codeclimate.json
+    - docker run 
+      --env CODECLIMATE_CODE="$PWD"
+      --volume "$PWD":/code
+      --volume /var/run/docker.sock:/var/run/docker.sock
+      --volume /tmp/cc:/tmp/cc
+      codeclimate/codeclimate analyze -f json > gl-code-quality-report.json
   artifacts:
-    paths: [codeclimate.json]
+    reports:
+      codequality: gl-code-quality-report.json
   when: manual
 
 # Automated quality check job when something is pushed/merged on master.
