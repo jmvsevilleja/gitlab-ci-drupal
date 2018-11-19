@@ -195,7 +195,7 @@ stages:
     - tar -xzf drupal.tar.gz
     - mv drupal-project-8.x drupal
     - rm -f drupal.tar.gz
-    - composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction --quiet --no-dev
+    # - composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction --quiet
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
@@ -275,8 +275,8 @@ Build:
   cache:
     key: drupal-build-cache
     paths:
-      - ${WEB_ROOT}
-      - vendor
+      - drupal/${WEB_ROOT}
+      - drupal/vendor
       - dump
 
 # Job to run Unit and Kernel tests, do not require a build.
