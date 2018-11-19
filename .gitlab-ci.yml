@@ -194,12 +194,12 @@ stages:
     - curl -fsSl https://codeload.github.com/drupal-composer/drupal-project/tar.gz/8.x -o drupal.tar.gz
     - tar -xzf drupal.tar.gz
     - mv drupal-project-8.x drupal
-    - rm -f drupal.tar.gz
     # check if not already from cache.
     - if [ ! -f ./drupal/web/index.php ];
       then
-        composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction -vvv
+        composer install --working-dir drupal --prefer-dist --no-suggest --no-interaction -vvv;
       fi
+    - rm -f drupal.tar.gz
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
