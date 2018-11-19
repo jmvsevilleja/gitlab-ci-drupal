@@ -177,34 +177,17 @@ stages:
   script:
     - composer global require hirak/prestissimo
         --no-progress --no-suggest --ignore-platform-reqs
-    # Sample to install a Drupal 8 with drupal composer template.
-    # - mkdir -p build-${CI_JOB_NAME}
-    # - composer create-project drupal-composer/drupal-project:8.x-dev build-${CI_JOB_NAME}
-    #     --stability dev --no-interaction --ignore-platform-reqs --quiet
-    # - cp -r build-${CI_JOB_NAME}/* .
-    # - rm -rf build-${CI_JOB_NAME}
     # Install project libraries and dependencies from a local composer.json
-    # - composer install
-    #   --dev --ignore-platform-reqs --no-suggest --no-interaction --quiet
-    # Install and use compass if using Sass file in the theme.
-    # - apk --no-cache add ruby ruby-dev libffi-dev build-base
-    # - gem install --no-document listen sass compass bootstrap-sass
-    # - compass compile ${WEB_ROOT}/themes/custom/${THEME}
-    - apk --no-cache add curl
-    - curl -fsSl https://codeload.github.com/drupal-composer/drupal-project/tar.gz/8.x -o drupal.tar.gz
-    - tar -xzf drupal.tar.gz
-    - mv drupal-project-8.x drupal
-    # check if not already from cache.
-    - if [ ! -f ./drupal/web/index.php ];
-      then
-        composer install --working-dir drupal --ignore-platform-reqs --prefer-dist --no-suggest --no-interaction -vvv;
-      fi
-    - rm -f drupal.tar.gz
+    # Remove the lock used for testing.
+    - rm -f composer.lock
+    - composer install
+      --no-dev --ignore-platform-reqs --no-suggest --no-interaction --quiet
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}"
     paths:
-      # Folders from Drupal template, add any folders/files you need.
-      - ./drupal
+      # Folders from Drupal, add any folders/files you need.
+      - vendor
+      - ${WEB_ROOT}
     expire_in: 1 day
   variables:
     MYSQL_ALLOW_EMPTY_PASSWORD: "1"
@@ -279,7 +262,8 @@ Build:
   cache:
     key: drupal-build-cache
     paths:
-      - drupal
+      - vendor
+      - ${WEB_ROOT}
       - dump
 
 # Job to run Unit and Kernel tests, do not require a build.
