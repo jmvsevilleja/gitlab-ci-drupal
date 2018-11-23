@@ -45,7 +45,9 @@ drupal8ci:build:
   <<: *drupal8ci_template
   stage: build
   script:
-    - composer install
+    - composer global require hirak/prestissimo --no-progress
+    - composer create-project drupal-composer/drupal-project:8.x-dev drupal --stability dev --no-interaction --ignore-platform-reqs
+    - cp -rf drupal/* ${CI_PROJECT_DIR} && cp -f drupal/.e* ${CI_PROJECT_DIR} && cp -f drupal/.g* ${CI_PROJECT_DIR};
     - robo install:dependencies
   services:
     - mariadb:10.3
