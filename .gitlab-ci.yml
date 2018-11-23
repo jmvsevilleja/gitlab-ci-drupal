@@ -56,6 +56,7 @@ drupal8ci:build:
     paths:
       - vendor
       - web
+      - load.environment.php
   except:
     - master
 
