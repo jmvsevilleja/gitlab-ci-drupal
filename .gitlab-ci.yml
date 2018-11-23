@@ -1,7 +1,6 @@
 stages:
   - build
   - test
-#  - deploy
 
 # The shared template for Drupal8CI builds and tests.
 .drupal8ci_template: &drupal8ci_template
@@ -57,6 +56,8 @@ drupal8ci:build:
       - vendor
       - web
       - load.environment.php
+      - composer.json
+      - composer.lock
   except:
     - master
 
