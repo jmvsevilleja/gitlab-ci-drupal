@@ -6,10 +6,10 @@ stages:
 .drupal8ci_template: &drupal8ci_template
   except:
     - master
-  image: juampynr/drupal8ci:latest
+  image: mogtofu33/drupal8ci:latest
   services:
-    - mariadb:10.3
-    #- selenium/standalone-chrome-debug:3.7.1-beryllium
+    - mariadb:latest
+    #- selenium/standalone-chrome-debug:latest
   before_script:
     - mkdir -p /var/www/html
     - ln -s $CI_PROJECT_DIR/web /var/www/html/web
@@ -49,8 +49,8 @@ drupal8ci:build:
     - cp -rf drupal/* ${CI_PROJECT_DIR} && cp -f drupal/.e* ${CI_PROJECT_DIR} && cp -f drupal/.g* ${CI_PROJECT_DIR};
     - robo install:dependencies
   services:
-    - mariadb:10.3
-    - selenium/standalone-chrome-debug:3.7.1-beryllium
+    - mariadb:latest
+    - selenium/standalone-chrome-debug:latest
   artifacts:
     paths:
       - vendor
@@ -103,26 +103,6 @@ drupal8ci:unit_kernel_tests:
 #    paths:
 #      - artifacts/behat
 #      - artifacts/screenshots
-
-## Job to check coding standards.
-drupal8ci:code_sniffer:
-  <<: *drupal8ci_test_template
-  script:
-    - vendor/bin/phpcs --config-set installed_paths vendor/drupal/coder/coder_sniffer
-    - mkdir -p artifacts/phpcs
-    - vendor/bin/phpcs
-        --standard=Drupal
-        --report=junit
-        --report-junit=artifacts/phpcs/phpcs.xml
-        web/modules/custom
-    - vendor/bin/phpcs
-        --standard=DrupalPractice
-        --report=junit
-        --report-junit=artifacts/phpcs/phpcs.xml
-        web/modules/custom
-  artifacts:
-    paths:
-      - artifacts/phpcs/phpcs.xml
 
 ## Job to check test coverage.
 drupal8ci:code_coverage:
