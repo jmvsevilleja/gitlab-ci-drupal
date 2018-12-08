@@ -274,309 +274,42 @@ Build:
     paths:
       - drupal
 
-# Job to run Unit and Kernel tests, do not require a build.
-Unit and kernel tests:
-  stage: test
-  # Build is not for master but only some other branches.
-  except:
-    - master
-  only:
-    - testing
+# Job to run Functional tests, require an install.
+# WIP https://gitlab.com/MadLittleMods/playing-with-selenium-on-gitlab-ci/blob/master/.gitlab-ci.yml
+Functional JS:
+  stage: tests
   <<: *test_template
-  script:
-    - cd ${WEB_ROOT}
-    - sudo -E -u www-data
-      ../vendor/bin/phpunit
-        -c core --verbose
-        --log-junit ../${REPORT_DIR}/phpunit.xml
-        --testdox-html ../${REPORT_DIR}/phpunit.html
-        ${UNIT_TEST_ROOT}
-
-# Job to check test coverage, need a build.
-Code coverage:
-  stage: test
-  # Build is not for master but only some other branches.
-  except:
-    - master
-  only:
-    - testing
   dependencies:
     - Build
-  <<: *test_template
+  services:
+    - mariadb:latest
+    - name: selenium/standalone-chrome-debug:latest
+      alias: chromedriver
+    - docker:dind
+    #- selenium/standalone-firefox:latest
   script:
-    # Create the needed folders.
-    - mkdir -p ${REPORT_DIR}/coverage-xml
-    - mkdir -p ${REPORT_DIR}/coverage-html
-    - chmod -R 777 ${REPORT_DIR}
-    - cd ${WEB_ROOT}
-    - timeout 60m sudo -E -u www-data
-      ../vendor/bin/phpunit
-        -c core
-        --coverage-xml ../${REPORT_DIR}/coverage-xml
-        --coverage-html ../${REPORT_DIR}/coverage-html
-        --coverage-text --colors=never
-        --testsuite nonfunctional
-        ${UNIT_TEST_ROOT}
-  # https://docs.gitlab.com/ee/ci/yaml/#coverage
-  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
-
-################################################################################
-# Code quality jobs for Drupal 8+
-################################################################################
-
-# Automated quality check job when something is pushed/merged on master.
-# We have a limit on errors we accept on the tools, if failed we run a
-# report and stop.
-Code quality:
-  stage: code quality
-  # Limit to branch push, for more options see
-  # https://docs.gitlab.com/ee/ci/yaml/#only-and-except-simplified
-  only:
-    - branches
-  <<: *phpqa_template
-  script:
-    - phpqa ${PHPQA_REPORT} ${TOOLS} ${PHPQA_PHP_CODE}
-
-# Drupal coding standard best practices report (can not be included in
-# codequality as we are already running Drupal coding standard).
-Best practices:
-  stage: code quality
-  only:
-    - branches
-  <<: *phpqa_template
-  script:
-    - phpqa ${PHPQA_REPORT}
-        --config ./phpqa_config/phpcs_drupal_best_practices
-        ${BEST_PRACTICES}
-        ${PHPQA_PHP_CODE}
-  # Allow failure to produce report and warning.
-  allow_failure: true
-
-################################################################################
-# Code  lint jobs for Drupal 8+
-################################################################################
-
-# This is a eslint report based on Drupal 8 standards.
-Eslint:
-  stage: code lint
-  only:
-    - branches
-  <<: *node_template
-  artifacts:
-    <<: *default_artifacts
-    paths:
-      - ${REPORT_DIR}/es-lint-report.html
-  script:
-    # We grab the latest eslint rules for Drupal 8.
-    - apk --no-cache add curl
-    - mkdir -p ${WEB_ROOT}/core
-    - curl -fsSL https://cgit.drupalcode.org/drupal/plain/core/.eslintrc.json
-      -o ${WEB_ROOT}/core/.eslintrc.json
-    # Drupal 8.6.x specfic rules override for passing.
-    - curl -fsSL https://cgit.drupalcode.org/drupal/plain/core/.eslintrc.passing.json
-      -o ${WEB_ROOT}/core/.eslintrc.passing.json
-    # Fix Error https://github.com/npm/uid-number/issues/3#issuecomment-291362937
-    - npm config set user 0
-    - npm config set unsafe-perm true
-    # Install eslint airbnb standard + prettier.
-    - npm install --no-audit --silent eslint eslint-config-airbnb
-        eslint-plugin-import eslint-plugin-jsx-a11y
-        eslint-plugin-react eslint-plugin-prettier
-        eslint-config-prettier prettier
-    # Run the eslint command to generate a report.
-    - node_modules/.bin/eslint
-        --config ./${WEB_ROOT}/core/.eslintrc.passing.json
-        --format html
-        --output-file ${REPORT_DIR}/es-lint-report.html
-        --ignore-pattern ${JS_CODE_IGNORE}
-        ${JS_CODE}
-  # Allow failure to produce report and warning.
-  allow_failure: true
-
-# Drupal 8.6+ rules used here for css stylelint.
-Css lint:
-  stage: code lint
-  only:
-    - branches
-  <<: *node_template
-  artifacts:
-    <<: *default_artifacts
-    paths:
-      - ${REPORT_DIR}/css-lint-report.txt
-  script:
-    # We grab the Drupal standards, not needed if after a build.
-    - apk --no-cache add curl
-    - curl -fsSL https://cgit.drupalcode.org/drupal/plain/core/.stylelintrc.json
-      -o ${WEB_ROOT}/.stylelintrc.json
-    # Fix Error https://github.com/npm/uid-number/issues/3#issuecomment-291362937
-    - npm config set user 0
-    - npm config set unsafe-perm true
-    - npm install --no-audit --silent stylelint stylelint-config-standard stylelint-no-browser-hacks
-    - node_modules/.bin/stylelint "./${CSS_FILES}" > ${REPORT_DIR}/css-lint-report.txt
-  allow_failure: true
-
-# This is a sass lint report, default rules used here.
-Sass lint:
-  stage: code lint
-  only:
-    - branches
-  <<: *node_template
-  artifacts:
-    <<: *default_artifacts
-    paths:
-      - ${REPORT_DIR}/sass-lint-report.html
-  script:
-    - apk --no-cache add git
-    # Fix Error https://github.com/npm/uid-number/issues/3#issuecomment-291362937
-    - npm config set user 0
-    - npm config set unsafe-perm true
-    # Project seems a bit outdated, an ongoing tag is currently more up to date.
-    - npm install --no-audit --silent git://github.com/sasstools/sass-lint.git#1.13.0
-    - 'node_modules/.bin/sass-lint --config ${SASS_CONFIG}
-        --verbose
-        --no-exit
-        --format html
-        --output ${REPORT_DIR}/sass-lint-report.html'
-  allow_failure: true
-
-# This is a markdown lint report, based on generic default rules.
-Markdown lint:
-  stage: code lint
-  only:
-    - branches
-  <<: *ruby_template
-  artifacts:
-    <<: *default_artifacts
-    paths:
-      - ${REPORT_DIR}/markdown_lint.txt
-  script:
-    - gem install mdl
-    - mdl ${WEB_ROOT}/modules/custom > ${REPORT_DIR}/markdown_lint.txt
-  allow_failure: true
-
-################################################################################
-# Code metrics, only on tag for a release.
-################################################################################
-
-# Phpmetrics report, no pass or failure as it's just informative.
-phpmetrics:
-  stage: php code metrics
-  only:
-    - tags
-  <<: *phpqmetrics_template
-  script:
-    - ./phpmetrics
-        --report-html=${REPORT_DIR}
-        --extensions=php,inc,module
-        ${PHP_CODE}
-
-# Phploc report, no pass or failure as it's just informative.
-phploc:
-  stage: php code metrics
-  only:
-    - tags
-  <<: *phpqa_template
-  script:
-    - phpqa ${PHPQA_REPORT}
-        --tools phploc
-        ${PHPQA_PHP_CODE}
-
-# Same reports for all Drupal code including our custom.
-# Those commands require enough resources from the runner.
-phpmetrics All:
-  stage: php code metrics
-  only:
-    - tags
-  <<: *phpqmetrics_template
-  script:
-    - ./phpmetrics
-        --report-html=${REPORT_DIR}
-        --extensions=php,inc,module
-        ${WEB_ROOT}
-  cache:
-    key: drupal-$CI_BUILD_REF_NAME
-  dependencies:
-    - Build
-
-phploc All:
-  stage: php code metrics
-  only:
-    - tags
-  <<: *phpqa_template
-  script:
-    - phpqa ${PHPQA_REPORT}
-        --tools phploc
-        ${PHPQA_ALL_CODE}
-  cache:
-    key: drupal-$CI_BUILD_REF_NAME
-  dependencies:
-    - Build
-
-################################################################################
-# Deploy jobs definition.
-#
-# This is a sample workflow, testing is run on master and testing branches
-# pushes or merge, other deploy are manual. Using a basic bash deploy, you must
-# adapt if you are using a specific deploy process.
-#
-# You need to be sure we can ssh to the machine, a deploy key must be manually
-# added on the target in  ~/.ssh/authorized_keys
-# Private key name and values must be set on Gitlab:
-#   Settings > CI / CD > Variables
-################################################################################
-
-Deploy to testing:
-  stage: deploy to testing
-  only:
-    - testing
-    - master
-  environment:
-    name: testing
-    url: http://${TESTING_HOST}
-  before_script: *ssh_agent_template
-  script:
-    - echo "Deploy to testing"
-    - echo -e "${TESTING_PRIVATE_KEY}" > ~/.ssh/id_rsa
-    - chmod 400 ~/.ssh/id_rsa
-    # We can now ssh and run any deploy script.
-    # - ssh $USER_NAME@$TESTING_HOST
-    #     "cd ${DRUPAL_FOLDER}; ./scripts/my_deploy_script.sh;"
-
-Deploy to staging:
-  stage: deploy to staging
-  only:
-    - staging
-    - master
-  environment:
-    name: staging
-    url: http://${STAGING_HOST}
-  before_script: *ssh_agent_template
-  script:
-    - echo "Deploy to staging"
-    - echo -e "${STAGING_PRIVATE_KEY}" > ~/.ssh/id_rsa
-    - chmod 400 ~/.ssh/id_rsa
-    # We can now ssh and run any deploy script.
-    # - ssh $USER_NAME@$TESTING_HOST
-    #     "cd ${DRUPAL_FOLDER}; ./scripts/my_deploy_script.sh;"
-  when: manual
-
-Deploy to production:
-  stage: deploy to production
-  only:
-    - production
-    - master
-  environment:
-    name: production
-    url: http://${PRODUCTION_HOST}
-  before_script: *ssh_agent_template
-  script:
-    - echo "Deploy to production"
-    - echo -e "${PRODUCTION_PRIVATE_KEY}" > ~/.ssh/id_rsa
-    - chmod 400 ~/.ssh/id_rsa
-    # We can now ssh and run any deploy script.
-    # - ssh $USER_NAME@$TESTING_HOST
-    #     "cd ${DRUPAL_FOLDER}; ./scripts/my_deploy_script.sh;"
-  when: manual
+    - docker ps
+    - curl http://chromedriver:4444/wd/hub/status
+    - cp .gitlab-ci/.env ${WEB_ROOT}/core/.env || true
+    - cd ${WEB_ROOT}/core
+    - yarn install
+    - yarn test:nightwatch --skiptags core
+    #- cp -rf reports/nightwatch ${CI_PROJECT_DIR}/${REPORT_DIR}
+  variables:
+    MYSQL_ALLOW_EMPTY_PASSWORD: "1"
+    MYSQL_DATABASE: "drupal"
+    BROWSERTEST_OUTPUT_DIRECTORY: "/var/www/html/web/sites/simpletest"
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_DRIVER: overlay2
+    # DRUPAL_TEST_BASE_URL: "http://localhost"
+    # DRUPAL_TEST_DB_URL: "mysql://root@mariadb/drupal"
+    # DRUPAL_TEST_WEBDRIVER_HOSTNAME: "chromedriver"
+    # DRUPAL_TEST_WEBDRIVER_PORT: "9515"
+    # DRUPAL_TEST_CHROMEDRIVER_AUTOSTART: "false"
+    # DRUPAL_TEST_WEBDRIVER_CHROME_ARGS: "--disable-gpu --headless --no-sandbox"
+    # DRUPAL_NIGHTWATCH_OUTPUT: "/var/www/html/${REPORT_DIR}/nightwatch"
+    # DRUPAL_NIGHTWATCH_IGNORE_DIRECTORIES: "node_modules,vendor,.*,sites/*/files,sites/*/private,sites/simpletest"
+    # DRUPAL_NIGHTWATCH_SEARCH_DIRECTORY: "../modules/custom,../themes/custom"
 
 # Default docker image when not overriden.
 image: alpine:latest
