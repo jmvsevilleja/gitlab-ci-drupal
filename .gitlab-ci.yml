@@ -96,7 +96,7 @@ variables:
 stages:
   - build
   # only on branch testing
-  - test
+  - tests
   - code quality
   - code lint
   # Only on tag, when released
